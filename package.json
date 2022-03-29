@@ -2,6 +2,10 @@
 	"name": "fcc-exercise-tracker",
 	"version": "0.1.0",
 	"description": "A REST API project, part of Free Code Camp's curriculum",
+	"author": {
+		"name": "omgkotofey",
+		"email": "omgkotofey@gmail.com"
+	},
 	"main": "server.js",
 	"scripts": {
 		"start": "node server.js"
