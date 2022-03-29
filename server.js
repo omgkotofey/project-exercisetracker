@@ -1,11 +1,14 @@
-const express = require('express')
-const app = express()
-const cors = require('cors')
-require('dotenv').config()
+const express = require('express');
+const app = express();
+const cors = require('cors');
+const mongoose = require('mongoose');
+const dotenv = require('dotenv');
 
-app.use(cors())
-app.use(express.static('public'))
+dotenv.config();
+mongoose.connect(process.env['MONGO_URI'], { useNewUrlParser: true });
 
+app.use(cors());
+app.use(express.static('public'));
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
