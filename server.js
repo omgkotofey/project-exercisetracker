@@ -5,11 +5,19 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 
-const { UserManager, TaskManager } = require('./src/managers.js');
-
+const { UserManager, TaskManager, LogsManager } = require('./src/managers.js');
+const { Task, User } = require('./src/schemas.js');
+const { errorHandler, APIError } = require('./src/errors.js');
 
 dotenv.config();
-mongoose.connect(process.env['MONGO_URI'], { useNewUrlParser: true });
+
+mongoose
+  .connect(process.env['MONGO_URI'], {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log("Successfully connected to MongoDB."))
+  .catch(err => console.error("Connection error", err));
 
 app.use(cors());
 app.use(express.static('public'));
@@ -19,41 +27,61 @@ app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
 });
 
-app.get('/api/users/:userId', (req, res) => { 
+app.get('/api/users', async (req, res, next) => {   
+  try {
+    const users = await UserManager.findAll();
+    res.status(200).send(users);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/api/users/:userId', async (req, res) => { 
   const { userId } = req.params;
-  
-  return UserManager.findById(userId)
-  .then(user => {
-    if (!user) {
-      res.status(404).send(`Error: User not found`);
-    }
+
+  try {
+    const user = await UserManager.findById(userId);
     res.status(200).send(user);
-  })
+  } catch (error) {
+    next(new APIError(404, `Error: User not found`));
+  }
 });
 
-app.post('/api/users', (req, res) => { 
+app.post('/api/users', async (req, res) => { 
   const { username } = req.body;
-  
-  return UserManager.createUser(username)
-  .then(user => res.status(200).send(user))
-  .catch(err => {
-    console.error(err);
-    return res.status(400).send(`Error: Something went wrong`)
-  });
+
+  try {
+    const user = await UserManager.createUser(username);
+    res.status(200).send(user);
+  } catch (error) {
+    next(error);
+  }
 });
 
-app.post('/api/users/:userId/exercises', (req, res) => { 
+app.get('/api/users/:userId/logs', async (req, res) => { 
+  const { userId } = req.params;
+
+  try {
+    const data = await LogsManager.findUserWithTaks(userId);
+    res.status(200).send(data);
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/users/:userId/exercises', async (req, res) => { 
   const { userId } = req.params;
   const { description, duration, date } = req.body;
-  
-  return TaskManager.createTask(userId, description, duration, date)
-  .then(task => res.status(200).send(task))
-  .catch(err => {
-    console.error(err);
-    return res.status(400).send(`Error: Something went wrong`)
-  });
+
+  try {
+    const task = await TaskManager.createTask(userId, description, duration, date);
+    res.status(200).send(task);
+  } catch (error) {
+    next(error);
+  }
 });
 
+app.use(errorHandler);
 
 const listener = app.listen(process.env.PORT || 3000, () => {
   console.log('Your app is listening on port ' + listener.address().port)

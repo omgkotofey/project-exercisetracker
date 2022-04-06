@@ -4,7 +4,7 @@ const UserSchema = new mongoose.Schema({
   username: {
     type: String,
     required: true
-  }
+  },
 }, { versionKey: false });
 
 const TaskSchema = new mongoose.Schema({
@@ -16,13 +16,14 @@ const TaskSchema = new mongoose.Schema({
     type: Number,
     required: true
   }, 
-  user_id: {
+  user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
   },
   date: Date
 }, { versionKey: false });
 
-exports.User = mongoose.model('User', UserSchema);
-exports.Task = mongoose.model('Task', TaskSchema);
+module.exports = {
+  User: mongoose.model('User', UserSchema),
+  Task: mongoose.model('Task', TaskSchema)
+}
