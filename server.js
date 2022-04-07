@@ -22,6 +22,13 @@ mongoose
 app.use(cors());
 app.use(express.static('public'));
 app.use(bodyParser.urlencoded({extended: true})); 
+app.use((req, res, next) => {
+  console.log(req.method, req.path);
+  console.log(req.body);
+  console.log(req.query);
+  console.log(res.json);
+  next();
+});
 
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/views/index.html')
@@ -36,7 +43,7 @@ app.get('/api/users', async (req, res, next) => {
   }
 });
 
-app.get('/api/users/:userId', async (req, res) => { 
+app.get('/api/users/:userId', async (req, res, next) => { 
   const { userId } = req.params;
 
   try {
@@ -47,7 +54,7 @@ app.get('/api/users/:userId', async (req, res) => {
   }
 });
 
-app.post('/api/users', async (req, res) => { 
+app.post('/api/users', async (req, res, next) => { 
   const { username } = req.body;
 
   try {
@@ -58,18 +65,25 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-app.get('/api/users/:userId/logs', async (req, res) => { 
+app.get('/api/users/:userId/logs', async (req, res, next) => { 
   const { userId } = req.params;
+  const { limit, from, to } = req.query;
 
   try {
-    const data = await LogsManager.findUserWithTaks(userId);
+    const data = await LogsManager.findUserWithTaks(
+      userId, 
+      from,
+      to,
+      limit
+    );
+    console.log(data);
     res.status(200).send(data);
   } catch (error) {
     next(error);
   }
 });
 
-app.post('/api/users/:userId/exercises', async (req, res) => { 
+app.post('/api/users/:userId/exercises', async (req, res, next) => { 
   const { userId } = req.params;
   const { description, duration, date } = req.body;
 

@@ -1,5 +1,22 @@
 const { User, Task } = require('./schemas.js');
 
+const Formatter = {
+  formatTask: (task, user) => {
+    return {
+      "_id": task._id,
+      "username": user.username,
+      ...Formatter.formatTaskForLog(task)
+    }
+  },
+  formatTaskForLog: (task) => {
+    return {
+      "description": task.description,
+      "duration":  task.duration,
+      "date": task.date.toDateString()
+    }   
+  }
+}
+
 const UserManager = {
   createUser: async (username) => await User.create({ username: username }),
   findById: async (id) => {
@@ -19,20 +36,37 @@ const TaskManager = {
     }
     
     const user = await UserManager.findById(user_id);
-    
-    return await Task.create({
-      user_id: user._id,
+    const task = await Task.create({
+      user: user,
       description: description,
       duration: duration,
       date: date
-    });;
+    });
+
+    return Formatter.formatTask(task, user);
   },
   findAllByParams: async (user, from = null, to = null, limit = null) => {
-    return await Task.find({
-      user_id: user._id
-    })
-    .select('-_id')
-    .exec()
+    let params = {
+      user: user
+    };
+
+    if (from || to) {
+      params.date = {};
+      if (from) {
+        params.date.$gte = Date.parse(from);
+      }
+  
+      if (to) {
+        params.date.$lt = Date.parse(to);
+      }
+    }
+    
+    const query = Task.find(params).select('-_id');
+    if (limit) {
+      query.limit(limit);
+    }
+
+    return await query.exec();
   }
 };
 
@@ -41,10 +75,15 @@ const LogsManager = {
     const user = await UserManager.findById(user_id);
     const tasks = await TaskManager.findAllByParams(user, from, to, limit);
 
+    let taskLog = [];
+    for (task of tasks) {
+      taskLog.push(Formatter.formatTaskForLog(task))
+    }
+
     return {
       ...user.toObject(),
       count: tasks.length,
-      log: tasks
+      log: taskLog
     }
   }
 };

@@ -19,6 +19,7 @@ const TaskSchema = new mongoose.Schema({
   user: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
+    select: false,
   },
   date: Date
 }, { versionKey: false });
