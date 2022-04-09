@@ -3,9 +3,9 @@ const { User, Task } = require('./schemas.js');
 const Formatter = {
   formatTask: (task, user) => {
     return {
-      "_id": task._id,
       "username": user.username,
-      ...Formatter.formatTaskForLog(task)
+      ...Formatter.formatTaskForLog(task),
+      "_id": user._id,
     }
   },
   formatTaskForLog: (task) => {
